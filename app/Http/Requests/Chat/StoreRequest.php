@@ -23,6 +23,7 @@ class StoreRequest extends FormRequest
     {
         return [
             'title' => 'nullable|string',
+            'is_group' => 'nullable|boolean',
             'users' => 'required|array',
             'users.*' => 'required|integer|exists:users,id',
         ];

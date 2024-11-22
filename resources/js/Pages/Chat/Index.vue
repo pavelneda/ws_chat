@@ -3,12 +3,21 @@ import AuthenticatedLayout from "@/Layouts/AuthenticatedLayout.vue";
 import {Head, Link} from "@inertiajs/vue3";
 import SecondaryButton from "@/Components/SecondaryButton.vue";
 import PrimaryButton from "@/Components/PrimaryButton.vue";
+import TextInput from "@/Components/TextInput.vue";
 
 export default {
     name: "Index",
-    components: {PrimaryButton, SecondaryButton, Head, AuthenticatedLayout, Link},
+    components: {TextInput, PrimaryButton, SecondaryButton, Head, AuthenticatedLayout, Link},
 
     props: ['users', 'chats'],
+
+    data() {
+        return {
+            isGroup: null,
+            groupTitle: '',
+            userIdsGroup: [],
+        }
+    },
 
     methods: {
         store(id) {
@@ -17,6 +26,32 @@ export default {
                 users: [id],
             });
         },
+
+        storeGroup(){
+            if (!this.userIdsGroup.length >= 1) return;
+
+            this.$inertia.post(route('chats.store'), {
+                title: !!this.groupTitle ? this.groupTitle : null,
+                users: this.userIdsGroup,
+                is_group: true,
+            });
+        },
+
+        refreshGroup(){
+            this.isGroup = false;
+            this.groupTitle = '';
+            this.userIdsGroup = [];
+        },
+
+        toggleUser(id){
+            const index = this.userIdsGroup.indexOf(id);
+            if (index === -1){
+                this.userIdsGroup.push(id);
+            }else{
+                this.userIdsGroup.splice(index,1);
+            }
+        },
+
     },
 }
 </script>
@@ -27,7 +62,7 @@ export default {
     <AuthenticatedLayout>
 
         <div class="py-12">
-            <div class="flex gap-x-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
+            <div class="flex items-start gap-x-6 mx-auto max-w-7xl sm:px-6 lg:px-8">
                 <div class="w-full bg-white p-4 shadow sm:rounded-lg sm:p-8">
                     <h2 class="text-xl font-semibold leading-tight text-gray-800">
                         Chats
@@ -41,13 +76,30 @@ export default {
                     </div>
                 </div>
                 <div class="w-full bg-white p-4 shadow sm:rounded-lg sm:p-8">
-                    <h2 class="text-xl font-semibold leading-tight text-gray-800">
-                        Users
-                    </h2>
+                    <div class="flex justify-between items-center">
+                        <h2 class="text-xl font-semibold leading-tight text-gray-800">
+                            Users
+                        </h2>
+                        <PrimaryButton v-if="!isGroup" @click="isGroup = true">Make group</PrimaryButton>
+                        <div v-if="isGroup">
+                            <TextInput type="text"
+                                       class="mr-4 py-1"
+                                       v-model="groupTitle">
+                            </TextInput>
+                            <PrimaryButton @click="storeGroup"
+                                           :class="this.userIdsGroup.length >= 1 ? 'bg-sky-500' : '!bg-gray-500 cursor-not-allowed'">Go chat
+                            </PrimaryButton>
+                            <PrimaryButton @click="refreshGroup" class="bg-red-500 ml-4">X</PrimaryButton>
+                        </div>
+                    </div>
                     <div v-if="users" class="mt-4">
-                        <div v-for="user in users" class="flex items-center mt-2 pt-2 border-t border-gray-500">
-                            <p>{{ user.name }}</p>
-                            <PrimaryButton @click="store(user.id)" class="bg-sky-500 ml-4">Message</PrimaryButton>
+                        <div v-for="user in users"
+                             class="flex items-center justify-between mt-2 pt-2 border-t border-gray-500">
+                            <div class="flex items-center">
+                                <p>{{ user.name }}</p>
+                                <PrimaryButton @click="store(user.id)" class="bg-sky-500 ml-4">Message</PrimaryButton>
+                            </div>
+                            <input v-if="isGroup" @click="toggleUser(user.id)" type="checkbox">
                         </div>
                     </div>
                 </div>

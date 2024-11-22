@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\Chat\StoreRequest;
 use App\Http\Resources\Chat\ChatResource;
+use App\Http\Resources\Message\MessageResource;
 use App\Http\Resources\User\UserResource;
 use App\Models\Chat;
 use App\Models\User;
@@ -35,16 +36,21 @@ class ChatController extends Controller
 
         try {
             DB::beginTransaction();
-            $chat = Chat::firstOrCreate(
-                ['users' => $userIdsString],
-                ['title' => $data['title'], 'users' => $userIdsString]
-            );
+
+            if (isset($data['is_group']) && $data['is_group']) {
+                $chat = Chat::create(['title' => $data['title'], 'users' => $userIdsString]);
+            } else {
+                $chat = Chat::firstOrCreate(
+                    ['users' => $userIdsString],
+                    ['title' => $data['title'], 'users' => $userIdsString]
+                );
+            }
 
             $chat->users()->sync($userIds);
             DB::commit();
         } catch (\Exception $exception) {
             DB::rollBack();
-            return  redirect()->back()->withErrors($exception->getMessage());
+            return redirect()->back()->withErrors($exception->getMessage());
         }
 
         return redirect()->route('chats.show', $chat->id);
@@ -53,9 +59,12 @@ class ChatController extends Controller
     public function show(Chat $chat)
     {
         $users = $chat->users()->get();
+        $messages = $chat->messages()->get();
 
+        $messages = MessageResource::collection($messages)->resolve();
         $users = UserResource::collection($users)->resolve();
         $chat = ChatResource::make($chat)->resolve();
-        return Inertia::render('Chat/Show', compact('chat', 'users'));
+
+        return Inertia::render('Chat/Show', compact('chat', 'users', 'messages'));
     }
 }
