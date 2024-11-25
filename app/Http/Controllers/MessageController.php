@@ -2,12 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Events\StoreMessageEvent;
 use App\Http\Requests\Message\MessageRequest;
 use App\Http\Resources\Message\MessageResource;
 use App\Models\Message;
 use App\Models\MessageStatus;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\Mailer\Event\MessageEvent;
 
 class MessageController extends Controller
 {
@@ -28,6 +30,8 @@ class MessageController extends Controller
                     'user_id' => $userId,
                 ]);
             }
+
+            broadcast(new StoreMessageEvent($message))->toOthers();
             DB::commit();
         }catch (\Exception $exception){
             DB::rollBack();

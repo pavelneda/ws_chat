@@ -25,6 +25,13 @@ export default {
         }
     },
 
+    created() {
+        Echo.channel(`store-message.${this.chat.id}`)
+            .listen('.store-message', res => {
+                this.messages.push(res.message);
+            })
+    },
+
     methods: {
         store() {
             axios.post(route('messages.store'), {
