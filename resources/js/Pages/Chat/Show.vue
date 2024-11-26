@@ -29,7 +29,15 @@ export default {
         Echo.channel(`store-message.${this.chat.id}`)
             .listen('.store-message', res => {
                 this.messages.push(res.message);
+                axios.patch(route('message_statuses.update'), {
+                    chat_id: this.chat.id,
+                    user_id: this.$page.props.auth.user.id,
+                })
             })
+    },
+
+    unmounted() {
+        Echo.leaveChannel(`store-message.${this.chat.id}`);
     },
 
     methods: {
@@ -40,6 +48,7 @@ export default {
                 user_ids: this.userIds,
             }).then(res => {
                 this.body = '';
+                this.errors = null;
                 this.messages.push(res.data);
             }).catch(err => {
                 this.errors = err.response.data.errors;

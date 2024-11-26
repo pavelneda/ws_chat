@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Events\StoreMessageEvent;
+use App\Events\StoreMessageStatusEvent;
 use App\Http\Requests\Message\MessageRequest;
 use App\Http\Resources\Message\MessageResource;
 use App\Models\Message;
@@ -28,7 +29,14 @@ class MessageController extends Controller
                 MessageStatus::create([
                     'message_id' => $message->id,
                     'user_id' => $userId,
+                    'chat_id' => $data['chat_id'],
                 ]);
+
+                $count = MessageStatus::where('user_id', $userId)
+                    ->where('chat_id', $data['chat_id'])
+                    ->where('is_read', false)->count();
+
+                broadcast(new StoreMessageStatusEvent($data['chat_id'], $userId, $count));
             }
 
             broadcast(new StoreMessageEvent($message))->toOthers();

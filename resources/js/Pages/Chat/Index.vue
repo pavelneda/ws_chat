@@ -19,6 +19,17 @@ export default {
         }
     },
 
+    created() {
+        Echo.channel(`user.${this.$page.props.auth.user.id}`)
+            .listen('.store-message-status', res => {
+                this.chats.filter(chat => {
+                    if (chat.id === res.chat_id){
+                        chat.unreadable_message_status_count = res.count;
+                    }
+                })
+            })
+    },
+
     methods: {
         store(id) {
             this.$inertia.post(route('chats.store'), {
@@ -72,6 +83,7 @@ export default {
                             <Link :href="route('chats.show', chat.id)">
                                 <p>{{ chat.title ?? 'Your chat' }}</p>
                             </Link>
+                            <span v-if="chat.unreadable_message_status_count" class="ml-auto bg-sky-500 px-2 text-white rounded-full">{{ chat.unreadable_message_status_count }}</span>
                         </div>
                     </div>
                 </div>

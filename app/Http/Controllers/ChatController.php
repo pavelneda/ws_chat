@@ -20,7 +20,7 @@ class ChatController extends Controller
         $users = User::whereNot('id', auth()->id())->get();
         $users = UserResource::collection($users)->resolve();
 
-        $chats = auth()->user()->chats()->has('messages')->get();
+        $chats = auth()->user()->chats()->has('messages')->withCount('unreadableMessageStatus')->get();
         $chats = ChatResource::collection($chats)->resolve();
 
         return Inertia::render('Chat/Index', ['users' => $users, 'chats' => $chats]);
@@ -60,6 +60,8 @@ class ChatController extends Controller
     {
         $users = $chat->users()->get();
         $messages = $chat->messages()->get();
+
+        $chat->unreadableMessageStatus()->update(['is_read' => true]);
 
         $messages = MessageResource::collection($messages)->resolve();
         $users = UserResource::collection($users)->resolve();

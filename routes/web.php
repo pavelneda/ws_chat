@@ -28,6 +28,8 @@ Route::middleware('auth')->group(function () {
     Route::get('/chats/{chat}', [\App\Http\Controllers\ChatController::class, 'show'])->name('chats.show');
 
     Route::post('/messages', [\App\Http\Controllers\MessageController::class, 'store'])->name('messages.store');
+
+    Route::patch('/message_statuses', [\App\Http\Controllers\MessageStatusController::class, 'update'])->name('message_statuses.update');
 });
 
 require __DIR__.'/auth.php';

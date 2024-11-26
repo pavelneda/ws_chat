@@ -16,6 +16,7 @@ return new class extends Migration
 
             $table->foreignId('message_id')->index()->constrained('messages');
             $table->foreignId('user_id')->index()->constrained('users');
+            $table->foreignId('chat_id')->index()->constrained('chats');
 
             $table->boolean('is_read')->default(false);
 
