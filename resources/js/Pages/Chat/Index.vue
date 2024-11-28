@@ -20,11 +20,12 @@ export default {
     },
 
     created() {
-        Echo.channel(`user.${this.$page.props.auth.user.id}`)
+        Echo.private(`user.${this.$page.props.auth.user.id}`)
             .listen('.store-message-status', res => {
                 this.chats.filter(chat => {
-                    if (chat.id === res.chat_id){
+                    if (chat.id === res.chat_id) {
                         chat.unreadable_message_status_count = res.count;
+                        chat.last_message = res.message;
                     }
                 })
             })
@@ -38,7 +39,7 @@ export default {
             });
         },
 
-        storeGroup(){
+        storeGroup() {
             if (!this.userIdsGroup.length >= 1) return;
 
             this.$inertia.post(route('chats.store'), {
@@ -48,18 +49,18 @@ export default {
             });
         },
 
-        refreshGroup(){
+        refreshGroup() {
             this.isGroup = false;
             this.groupTitle = '';
             this.userIdsGroup = [];
         },
 
-        toggleUser(id){
+        toggleUser(id) {
             const index = this.userIdsGroup.indexOf(id);
-            if (index === -1){
+            if (index === -1) {
                 this.userIdsGroup.push(id);
-            }else{
-                this.userIdsGroup.splice(index,1);
+            } else {
+                this.userIdsGroup.splice(index, 1);
             }
         },
 
@@ -79,11 +80,22 @@ export default {
                         Chats
                     </h2>
                     <div v-if="chats" class="mt-4">
-                        <div v-for="chat in chats" class="flex items-center mt-2 pt-2 border-t border-gray-500">
+                        <div v-for="chat in chats" class="mt-4 pt-2 border-t border-gray-500">
                             <Link :href="route('chats.show', chat.id)">
                                 <p>{{ chat.title ?? 'Your chat' }}</p>
+                                <div :class="['flex items-center bg-gray-100 rounded-2xl p-4',
+                                    chat.unreadable_message_status_count ? 'bg-sky-100' : '']">
+                                    <div class="text-sm">
+                                        <p class="text-gray-500">{{ chat.last_message.user.name }} <span class="text-gray-500 italic">{{ chat.last_message.time }}</span>
+                                        </p>
+                                        <p>{{ chat.last_message.body }}</p>
+                                    </div>
+                                    <span v-if="chat.unreadable_message_status_count"
+                                          class="ml-auto bg-sky-500 px-2 text-white rounded-full">{{
+                                            chat.unreadable_message_status_count
+                                        }}</span>
+                                </div>
                             </Link>
-                            <span v-if="chat.unreadable_message_status_count" class="ml-auto bg-sky-500 px-2 text-white rounded-full">{{ chat.unreadable_message_status_count }}</span>
                         </div>
                     </div>
                 </div>
@@ -99,7 +111,8 @@ export default {
                                        v-model="groupTitle">
                             </TextInput>
                             <PrimaryButton @click="storeGroup"
-                                           :class="this.userIdsGroup.length >= 1 ? 'bg-sky-500' : '!bg-gray-500 cursor-not-allowed'">Go chat
+                                           :class="this.userIdsGroup.length >= 1 ? 'bg-sky-500' : '!bg-gray-500 cursor-not-allowed'">
+                                Go chat
                             </PrimaryButton>
                             <PrimaryButton @click="refreshGroup" class="bg-red-500 ml-4">X</PrimaryButton>
                         </div>

@@ -6,7 +6,7 @@ use App\Http\Resources\Message\MessageResource;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-class ChatResource extends JsonResource
+class ChatIndexResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -20,6 +20,7 @@ class ChatResource extends JsonResource
             'title' => $this->title,
             'users' => $this->users,
             'unreadable_message_status_count' => $this->unreadable_message_status_count,
+            'last_message' => MessageResource::make($this->lastMessage)->resolve(),
         ];
     }
 }

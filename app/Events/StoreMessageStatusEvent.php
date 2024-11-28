@@ -2,6 +2,7 @@
 
 namespace App\Events;
 
+use App\Http\Resources\Chat\ChatIndexResource;
 use App\Http\Resources\Message\MessageBroadcastResource;
 use App\Http\Resources\Message\MessageResource;
 use App\Models\Message;
@@ -14,25 +15,27 @@ use Illuminate\Contracts\Broadcasting\ShouldBroadcastNow;
 use Illuminate\Foundation\Events\Dispatchable;
 use Illuminate\Queue\SerializesModels;
 
-class StoreMessageStatusEvent implements ShouldBroadcast
+class StoreMessageStatusEvent implements ShouldBroadcastNow
 {
     use Dispatchable, InteractsWithSockets, SerializesModels;
 
     private $chat_id;
     private $user_id;
     private $count;
+    private $message;
 
 
     /**
      * Create a new event instance.
      */
-    public function __construct($chat_id, $user_id, $count)
+    public function __construct($chat_id, $user_id, $count, $message)
     {
 
 
         $this->chat_id = $chat_id;
         $this->user_id = $user_id;
         $this->count = $count;
+        $this->message = $message;
     }
 
     /**
@@ -43,7 +46,7 @@ class StoreMessageStatusEvent implements ShouldBroadcast
     public function broadcastOn(): array
     {
         return [
-            new Channel('user.' . $this->user_id),
+            new PrivateChannel('user.' . $this->user_id),
         ];
     }
 
@@ -66,6 +69,7 @@ class StoreMessageStatusEvent implements ShouldBroadcast
             'chat_id' => $this->chat_id,
             'user_id' => $this->user_id,
             'count' => $this->count,
+            'message' => MessageResource::make($this->message)->resolve(),
         ];
     }
 }

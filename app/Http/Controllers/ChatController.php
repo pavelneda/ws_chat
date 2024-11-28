@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\Chat\StoreRequest;
+use App\Http\Resources\Chat\ChatIndexResource;
 use App\Http\Resources\Chat\ChatResource;
 use App\Http\Resources\Message\MessageResource;
 use App\Http\Resources\User\UserResource;
@@ -20,8 +21,12 @@ class ChatController extends Controller
         $users = User::whereNot('id', auth()->id())->get();
         $users = UserResource::collection($users)->resolve();
 
-        $chats = auth()->user()->chats()->has('messages')->withCount('unreadableMessageStatus')->get();
-        $chats = ChatResource::collection($chats)->resolve();
+        $chats = auth()->user()->chats()
+            ->has('messages')
+            ->with('lastMessage')
+            ->withCount('unreadableMessageStatus')
+            ->get();
+        $chats = ChatIndexResource::collection($chats)->resolve();
 
         return Inertia::render('Chat/Index', ['users' => $users, 'chats' => $chats]);
     }
