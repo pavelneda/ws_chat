@@ -31,4 +31,10 @@ class Chat extends Model
         return $this->hasOne(Message::class, 'chat_id', 'id')
             ->latestOfMany();
     }
+
+    public function chatWith()
+    {
+        return $this->hasOneThrough(User::class, ChatUser::class, 'chat_id', 'id', 'id', 'user_id')
+            ->whereNot('user_id', auth()->id());
+    }
 }

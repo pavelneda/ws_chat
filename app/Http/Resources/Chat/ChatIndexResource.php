@@ -17,10 +17,10 @@ class ChatIndexResource extends JsonResource
     {
         return [
             'id' => $this->id,
-            'title' => $this->title,
+            'title' => $this->title ?? 'Chat with ' . $this->chatWith->name,
             'users' => $this->users,
             'unreadable_message_status_count' => $this->unreadable_message_status_count,
-            'last_message' => MessageResource::make($this->lastMessage)->resolve(),
+            'last_message' => isset($this->lastMessage) ? MessageResource::make($this->lastMessage)->resolve() : null,
         ];
     }
 }

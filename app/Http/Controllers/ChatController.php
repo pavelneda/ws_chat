@@ -23,9 +23,10 @@ class ChatController extends Controller
 
         $chats = auth()->user()->chats()
             ->has('messages')
-            ->with('lastMessage')
+            ->with(['lastMessage', 'chatWith'])
             ->withCount('unreadableMessageStatus')
             ->get();
+
         $chats = ChatIndexResource::collection($chats)->resolve();
 
         return Inertia::render('Chat/Index', ['users' => $users, 'chats' => $chats]);
@@ -63,15 +64,27 @@ class ChatController extends Controller
 
     public function show(Chat $chat)
     {
+        $page = request('page', 1);
+
         $users = $chat->users()->get();
-        $messages = $chat->messages()->get();
+        $messages = $chat->messages()
+            ->orderByDesc('created_at')
+            ->paginate(5, '*', 'page', $page);
 
         $chat->unreadableMessageStatus()->update(['is_read' => true]);
 
+        $isLastPage = $page == $messages->lastPage();
         $messages = MessageResource::collection($messages)->resolve();
-        $users = UserResource::collection($users)->resolve();
-        $chat = ChatResource::make($chat)->resolve();
+        if ($page > 1) {
+            return response()->json([
+                'messages' => $messages,
+                'is_last_page' => $isLastPage
+            ]);
+        }
 
-        return Inertia::render('Chat/Show', compact('chat', 'users', 'messages'));
+        $chat = ChatResource::make($chat)->resolve();
+        $users = UserResource::collection($users)->resolve();
+
+        return Inertia::render('Chat/Show', compact('chat', 'users', 'messages', 'isLastPage'));
     }
 }

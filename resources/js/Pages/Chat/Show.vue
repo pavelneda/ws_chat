@@ -10,12 +10,13 @@ export default {
     name: "Show",
     components: {InputError, TextInput, PrimaryButton, SecondaryButton, Head, AuthenticatedLayout},
 
-    props: ['chat', 'users', 'messages'],
+    props: ['chat', 'users', 'messages', 'isLastPage'],
 
     data() {
         return {
             body: null,
             errors: null,
+            page: 1,
         }
     },
 
@@ -28,7 +29,7 @@ export default {
     created() {
         Echo.channel(`store-message.${this.chat.id}`)
             .listen('.store-message', res => {
-                this.messages.push(res.message);
+                this.messages.unshift(res.message);
                 axios.patch(route('message_statuses.update'), {
                     chat_id: this.chat.id,
                     user_id: this.$page.props.auth.user.id,
@@ -49,11 +50,20 @@ export default {
             }).then(res => {
                 this.body = '';
                 this.errors = null;
-                this.messages.push(res.data);
+                this.messages.unshift(res.data);
             }).catch(err => {
                 this.errors = err.response.data.errors;
             })
+        },
+
+        loadMessages(){
+            axios.get(`/chats/${this.chat.id}?page=${++this.page}`)
+                .then(res => {
+                    this.messages.push(...res.data.messages)
+                    this.$page.props.isLastPage = res.data.is_last_page
+                })
         }
+
     },
 }
 </script>
@@ -70,7 +80,10 @@ export default {
                         {{ chat.title ?? 'Chat' }}
                     </h2>
                     <div class="mt-4" v-if="messages">
-                        <div v-for="message in messages" :class="['flex items-start gap-2.5 mb-4', message.is_owner ? 'justify-end' : '']">
+                        <div v-if="!isLastPage" class="text-center mb-4">
+                            <PrimaryButton @click="loadMessages">Load</PrimaryButton>
+                        </div>
+                        <div v-for="message in messages.slice().reverse()" :class="['flex items-start gap-2.5 mb-4', message.is_owner ? 'justify-end' : '']">
                             <div
                                 :class="['flex flex-col w-full max-w-[320px] leading-1.5 p-4 rounded-e-xl rounded-es-xl',
                                 message.is_owner ? 'bg-sky-100' : 'bg-gray-100']">

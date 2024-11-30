@@ -40,10 +40,10 @@ export default {
         },
 
         storeGroup() {
-            if (!this.userIdsGroup.length >= 1) return;
+            if (!this.groupTitle && this.userIdsGroup.length >= 1) return;
 
             this.$inertia.post(route('chats.store'), {
-                title: !!this.groupTitle ? this.groupTitle : null,
+                title: this.groupTitle,
                 users: this.userIdsGroup,
                 is_group: true,
             });
@@ -82,10 +82,10 @@ export default {
                     <div v-if="chats" class="mt-4">
                         <div v-for="chat in chats" class="mt-4 pt-2 border-t border-gray-500">
                             <Link :href="route('chats.show', chat.id)">
-                                <p>{{ chat.title ?? 'Your chat' }}</p>
+                                <p>{{ chat.title }}</p>
                                 <div :class="['flex items-center bg-gray-100 rounded-2xl p-4',
                                     chat.unreadable_message_status_count ? 'bg-sky-100' : '']">
-                                    <div class="text-sm">
+                                    <div v-if="chat.last_message" class="text-sm">
                                         <p class="text-gray-500">{{ chat.last_message.user.name }} <span class="text-gray-500 italic">{{ chat.last_message.time }}</span>
                                         </p>
                                         <p>{{ chat.last_message.body }}</p>
@@ -111,7 +111,7 @@ export default {
                                        v-model="groupTitle">
                             </TextInput>
                             <PrimaryButton @click="storeGroup"
-                                           :class="this.userIdsGroup.length >= 1 ? 'bg-sky-500' : '!bg-gray-500 cursor-not-allowed'">
+                                           :class="this.groupTitle && this.userIdsGroup.length >= 1 ? 'bg-sky-500' : '!bg-gray-500 cursor-not-allowed'">
                                 Go chat
                             </PrimaryButton>
                             <PrimaryButton @click="refreshGroup" class="bg-red-500 ml-4">X</PrimaryButton>
