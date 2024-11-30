@@ -18,7 +18,7 @@ class ChatController extends Controller
 
     public function index()
     {
-        $users = User::whereNot('id', auth()->id())->get();
+        $users = User::anotherUsers();
         $users = UserResource::collection($users)->resolve();
 
         $chats = auth()->user()->chats()
@@ -67,13 +67,11 @@ class ChatController extends Controller
         $page = request('page', 1);
 
         $users = $chat->users()->get();
-        $messages = $chat->messages()
-            ->orderByDesc('created_at')
-            ->paginate(5, '*', 'page', $page);
+        $messages = $chat->getMessageWithPagination($page);
 
-        $chat->unreadableMessageStatus()->update(['is_read' => true]);
+        $chat->readMessages();
 
-        $isLastPage = $page == $messages->lastPage();
+        $isLastPage = $messages->onLastPage();
         $messages = MessageResource::collection($messages)->resolve();
         if ($page > 1) {
             return response()->json([
